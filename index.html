@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        #message-wrapper {
+            position: fixed;
+            bottom: 1.5rem;
+            width: 100%;
+        }
+
+        #message {
+            min-height: 100px;
+        }
+
+        #chat {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .user-message {
+            align-self: end;
+            background-color: #343a40;
+            color: #fff;
+        }
+
+        .assistant-message {
+            align-self: start;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>AI Chat</h1>
+
+        <select id="modelSelect" class="form-select mb-3">
+            <option value="mistralai/mistral-7b-instruct:free">Mistral</option>
+            <option value="nousresearch/nous-capybara-7b:free">Nous</option>
+            <option value="openchat/openchat-7b:free">OpenChat</option>
+            <option value="gryphe/mythomist-7b:free">Mythomist</option>
+            <option value="undi95/toppy-m-7b:free">Toppy</option>
+            <option value="openrouter/cinematika-7b:free">Cinematika</option>
+            <option value="google/gemma-7b-it:free">Gemma</option>
+            <option value="meta-llama/llama-3-8b-instruct:free">Llama 3</option>
+        </select>
+        <hr>
+        <div id="chat" class="mb-3 d-flex flex-column">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div id="message-wrapper" class="container">
+            <textarea id="message" class="form-control mb-2" placeholder="Type your message here..."></textarea>
+            <button id="sendMessage" class="btn btn-dark w-100">Send</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"
+        integrity="sha512-xeUh+KxNyTufZOje++oQHstlMQ8/rpyzPuM+gjMFYK3z5ILJGE7l2NvYL+XfliKURMpBIKKp1XoPN/qswlSMFA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        const apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+        const apiKey = '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';
+        let conversation = [
+            {
+                role: 'system', content: `${prompt("Enter System Prompt: ")}`
+            }
+        ];
+
+        document.getElementById('sendMessage').addEventListener('click', () => {
+            const userMessage = document.getElementById('message').value;
+            if (userMessage.trim() === "") return;
+            document.getElementById('message').value = ""; // Clear the input field
+            addMessage('User', userMessage, 'user-message');
+            conversation.push({ role: 'user', content: userMessage });
+            sendMessage(userMessage);
+        });
+
+        function addMessage(role, content, className, isMarkdown = false) {
+            const chat = document.getElementById('chat');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('px-4', 'py-2', 'rounded-4', 'col-10', 'mb-3', className);
+            messageDiv.innerHTML = `<strong class="role">${role}</strong><br><div class="content">${isMarkdown ? marked.parse(content) : content}</div>`;
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
+        }
+
+        async function sendMessage(userMessage) {
+            const selectedModel = document.getElementById('modelSelect').value;
+            const data = {
+                model: selectedModel,
+                messages: conversation,
+                stream: true
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let assistantMessage = "";
+            addMessage('Assistant', assistantMessage, 'assistant-message', true);
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const decodedValue = decoder.decode(value, { stream: true });
+                const chunks = decodedValue.split('\n').filter(chunk => chunk);
+
+                for (const chunk of chunks) {
+                    if (chunk === "data: [DONE]") {
+                        return; // End of stream
+                    }
+                    if (!chunk.startsWith("data: ")) {
+                        continue; // Skip any non-data lines
+                    }
+                    try {
+                        const parsedChunk = JSON.parse(chunk.slice(6));
+                        if (parsedChunk.choices && parsedChunk.choices.length > 0) {
+                            const delta = parsedChunk.choices[0].delta.content || '';
+                            assistantMessage += delta;
+                            updateAssistantMessage(assistantMessage);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing chunk:', chunk, error);
+                    }
+                }
+            }
+
+            conversation.push({ role: 'assistant', content: assistantMessage });
+        }
+
+        function updateAssistantMessage(content) {
+            const chat = document.getElementById('chat');
+            const messageDivs = chat.getElementsByClassName('assistant-message');
+            const lastMessageDiv = messageDivs[messageDivs.length - 1];
+            lastMessageDiv.querySelector('.content').innerHTML = marked.parse(content);
+            chat.scrollTop = chat.scrollHeight; // Scroll to the bottom
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
