@@ -86,9 +86,14 @@
             addMessage('User', userMessage, 'user-message');
             conversation.push({ role: 'user', content: userMessage });
 
+            if (conversation.length === 1 && document.getElementById('modelSelect').value === 'meta-llama/llama-3-8b-instruct:free') {
+                sendMessage(userMessage, 'mistralai/mistral-7b-instruct:free');
+            } else {
+                sendMessage(userMessage);
+            }
             console.log(conversation);
-            sendMessage(userMessage);
         });
+
 
         function addMessage(role, content, className, isMarkdown = false) {
             const chat = document.getElementById('chat');
@@ -100,7 +105,8 @@
         }
 
         async function sendMessage(userMessage) {
-            const selectedModel = document.getElementById('modelSelect').value;
+            const selectedModel = model || document.getElementById('modelSelect').value;
+
             const data = {
                 model: selectedModel,
                 messages: conversation,
