@@ -20,8 +20,14 @@
         }
 
         #chat {
-            max-height: calc(100vh - 320px);
+            height: calc(100vh - 320px);
             overflow-y: auto;
+        }
+
+        @media screen and (max-width: 1200px) {
+            #chat {
+                max-height: 50vh;
+            }
         }
 
         .user-message {
