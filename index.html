@@ -129,6 +129,7 @@
 
                 for (const chunk of chunks) {
                     if (chunk === "data: [DONE]") {
+
                         conversation.push({ role: 'assistant', content: assistantMessage });
                         return; // End of stream
                     }
@@ -147,6 +148,9 @@
                     }
                 }
             }
+
+
+            console.log(conversation)
         }
 
         function updateAssistantMessage(content) {
