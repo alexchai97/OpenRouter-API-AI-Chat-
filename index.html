@@ -20,7 +20,7 @@
         }
 
         #chat {
-            max-height: 70vh;
+            max-height: calc(100vh - 320px);
             overflow-y: auto;
         }
 
@@ -55,9 +55,12 @@
         <div id="chat" class="mb-3 d-flex flex-column">
             <!-- Chat messages will appear here -->
         </div>
-        <div id="message-wrapper" class="container">
-            <textarea id="message" class="form-control mb-2" placeholder="Type your message here..."></textarea>
-            <button id="sendMessage" class="btn btn-dark w-100">Send</button>
+        <div id="message-wrapper">
+            <div class="container">
+                <textarea id="message" class="form-control mb-2" placeholder="Type your message here..."></textarea>
+                <button id="sendMessage" class="btn btn-dark w-100">Send</button>
+            </div>
+
         </div>
     </div>
 
