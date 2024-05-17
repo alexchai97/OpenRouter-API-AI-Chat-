@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to JSON Converter</title>
+</head>
+<body>
+    <textarea id="chatInput" rows="10" cols="50" placeholder="Enter Markdown Format"></textarea><br>
+    <button onclick="convertMarkdown()">Convert</button><br><br>
+    <textarea id="systemPrompt" rows="10" cols="50" placeholder="JSON Output"></textarea>
+
+    <script>
+        function convertMarkdown() {
+            const chatInput = document.getElementById('chatInput').value;
+            const lines = chatInput.split('\n');
+            const jsonOutput = [];
+
+            let currentRole = "system"; // Assuming system as the starting role
+
+            lines.forEach(line => {
+                const roleMatch = line.match(/^###\s*(.+)$/);
+                if (roleMatch) {
+                    currentRole = roleMatch[1].trim().toLowerCase();
+                } else {
+                    jsonOutput.push({
+                        "role": currentRole,
+                        "content": line.trim()
+                    });
+                }
+            });
+
+            document.getElementById('systemPrompt').value = JSON.stringify(jsonOutput, null, 4);
+        }
+    </script>
+</body>
+</html>
