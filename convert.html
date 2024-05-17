@@ -18,12 +18,13 @@
 
             blocks.forEach(block => {
                 const lines = block.split('\n');
-                let currentRole = "system"; // Assuming system as the starting role
+                let currentRole = null;
+
                 lines.forEach(line => {
                     const roleMatch = line.match(/^###\s*(.+)$/);
                     if (roleMatch) {
                         currentRole = roleMatch[1].trim().toLowerCase();
-                    } else {
+                    } else if (currentRole !== null) {
                         const content = line.trim().replace(/"/g, '\\"'); // Escape double quotes
                         jsonOutput.push({
                             "role": currentRole,
