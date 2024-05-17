@@ -13,21 +13,23 @@
     <script>
         function convertMarkdown() {
             const chatInput = document.getElementById('chatInput').value;
-            const lines = chatInput.split('\n');
+            const blocks = chatInput.split('\n\n'); // Split messages by double newline
             const jsonOutput = [];
 
-            let currentRole = "system"; // Assuming system as the starting role
-
-            lines.forEach(line => {
-                const roleMatch = line.match(/^###\s*(.+)$/);
-                if (roleMatch) {
-                    currentRole = roleMatch[1].trim().toLowerCase();
-                } else {
-                    jsonOutput.push({
-                        "role": currentRole,
-                        "content": line.trim()
-                    });
-                }
+            blocks.forEach(block => {
+                const lines = block.split('\n');
+                let currentRole = "system"; // Assuming system as the starting role
+                lines.forEach(line => {
+                    const roleMatch = line.match(/^###\s*(.+)$/);
+                    if (roleMatch) {
+                        currentRole = roleMatch[1].trim().toLowerCase();
+                    } else {
+                        jsonOutput.push({
+                            "role": currentRole,
+                            "content": line.trim()
+                        });
+                    }
+                });
             });
 
             document.getElementById('systemPrompt').value = JSON.stringify(jsonOutput, null, 4);
