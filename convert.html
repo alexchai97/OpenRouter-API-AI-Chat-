@@ -24,9 +24,10 @@
                     if (roleMatch) {
                         currentRole = roleMatch[1].trim().toLowerCase();
                     } else {
+                        const content = line.trim().replace(/"/g, '\\"'); // Escape double quotes
                         jsonOutput.push({
                             "role": currentRole,
-                            "content": line.trim()
+                            "content": content
                         });
                     }
                 });
